@@ -1,0 +1,94 @@
+plugins {
+  id 'java'
+  id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+subprojects{
+  apply plugin: 'java'
+
+  group = 'es.deusto.bigdata'
+  version = '1.0-SNAPSHOT'
+
+  repositories {
+    mavenCentral()
+    maven {
+      url "http://repo.hortonworks.com/content/repositories/releases/"
+    }
+  }
+}
+
+project(':storm'){
+  apply plugin: 'application'
+  apply plugin: 'com.github.johnrengelman.shadow'
+
+  sourceCompatibility = 1.7
+  targetCompatibility = 1.7
+
+  dependencies {
+    // https://mvnrepository.com/artifact/org.apache.kafka/kafka_2.10
+    compile (group: 'org.apache.kafka', name: 'kafka_2.10', version: '0.9.0.2.4.2.12-1') {
+      exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+      exclude group: 'log4j", module: "log4j'
+    }
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'org.apache.storm:storm-core:0.10.0'
+    compile 'org.apache.storm:storm-kafka:0.10.0'
+    compile group: 'org.twitter4j', name: 'twitter4j-core', version: '4.0.5'
+    compile group: 'org.twitter4j', name: 'twitter4j-stream', version: '4.0.5'
+  }
+
+  run {
+    args += 'local'
+  }
+
+  mainClassName = 'es.deusto.bigdata.start.TopologyMain'
+
+  shadowJar{
+    manifest {
+      attributes 'Implementation-Title': 'Storm',
+        'Implementation-Version': project.version,
+        'Main-Class': mainClassName
+    }
+    dependencies{
+      exclude(dependency('org.apache.storm:storm-core:0.10.0'))
+    }
+  }
+}
+
+project(':spark-streaming'){
+  apply plugin: 'scala'
+  apply plugin: 'application'
+  apply plugin: 'com.github.johnrengelman.shadow'
+
+  sourceCompatibility = 1.7
+  targetCompatibility = 1.7
+
+  mainClassName = 'es.deusto.bigdata.SentimentAnalysis'
+
+  dependencies {
+    compile 'org.apache.spark:spark-core_2.10:1.6.1'
+    compile 'org.apache.spark:spark-streaming_2.10:1.6.1'
+    compile 'org.apache.spark:spark-streaming-kafka_2.10:1.6.1'
+    compile 'org.apache.spark:spark-mllib_2.10:1.6.1'
+
+    compile 'log4j:log4j:1.2.17'
+
+    compile group: 'org.twitter4j', name: 'twitter4j-core', version: '4.0.5'
+    compile group: 'org.twitter4j', name: 'twitter4j-stream', version: '4.0.5'
+
+    compile 'edu.stanford.nlp:stanford-corenlp:3.4.1'
+    compile 'edu.stanford.nlp:stanford-corenlp:3.4.1:models'
+  }
+
+  mainClassName = 'es.deusto.bigdata.SentimentAnalysis'
+  shadowJar {
+    zip64 true
+    manifest {
+      attributes 'Implementation-Title': 'TweetsSentimentAnalysis',
+              'Implementation-Version': project.version,
+              'Main-Class': mainClassName
+    }
+  }
+
+
+}
